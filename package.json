@@ -1,6 +1,6 @@
 {
     "name": "crop-node-cli",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "CLI version of crop-node",
     "keywords": [
         "CLI",
