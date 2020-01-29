@@ -9,26 +9,31 @@ const run = async (cli) => {
     const { input, flags } = cli;
     const { path, outputFormat, silent } = flags;
 
+    // Show help if no input
     if (!input.length) {
         cli.showHelp();
         return;
     }
 
+    // Custom logger
     const log = (...args) => {
         if (!silent) {
             console.log(...args);
         }
     };
 
+    // do crop
     const buffer = await crop(input[0], {
         outputFormat,
     });
 
+    // Create output directory
     const outputPath = dirname(path);
     await mkdir(outputPath, {
         recursive: true,
     });
 
+    // Write file
     await writeFile(path, buffer);
     log("✔️ Cropped file created");
 };
