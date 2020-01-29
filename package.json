@@ -29,6 +29,7 @@
         "url": "https://github.com/GMartigny/crop-node-cli/issues"
     },
     "homepage": "https://github.com/GMartigny/crop-node-cli#readme",
+    "funding": "https://github.com/pencil-js/crop-node-cli?sponsor=1",
     "dependencies": {
         "crop-node": "^1.0.0",
         "meow": "^6.0.0"
