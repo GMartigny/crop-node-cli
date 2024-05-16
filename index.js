@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 
-const { dirname } = require("path");
-const { writeFile, mkdir } = require("fs").promises;
-const meow = require("meow");
-const crop = require("crop-node");
+import { parse, relative } from "path";
+import { promises } from "fs";
+import meow from "meow";
+import crop from "crop-node";
+
+const { mkdir, writeFile } = promises;
 
 const run = async (cli) => {
+    const started = performance.now();
     const { input, flags } = cli;
-    const { path, outputFormat, silent } = flags;
+    const { path, format, silent } = flags;
 
-    // Show help if no input
     if (!input.length) {
         cli.showHelp();
         return;
@@ -22,51 +24,56 @@ const run = async (cli) => {
         }
     };
 
-    // do crop
-    const buffer = await crop(input[0], {
-        outputFormat,
-    });
+    const outputPath = relative(process.cwd(), path);
+    if (outputPath) {
+        await mkdir(outputPath, {
+            recursive: true,
+        });
+    }
 
-    // Create output directory
-    const outputPath = dirname(path);
-    await mkdir(outputPath, {
-        recursive: true,
-    });
+    await Promise.all(input.map(async (file) => {
+        const { name } = parse(file);
+        const output = relative(process.cwd(), `${outputPath || "."}/${name}.cropped.${format}`);
+        const buffer = await crop(file, {
+            outputFormat: format,
+        });
+        await writeFile(output, buffer);
+        log(`✔️ ${output} file created`);
+    }));
 
-    // Write file
-    await writeFile(path, buffer);
-    log("✔️ Cropped file created");
+    log(`Done in ${Math.round(performance.now() - started).toLocaleString()} ms`);
 };
 
-const index = meow(`
+const cli = meow(`
     Usage
         $ crop-node <path> [<options>]
 
     Options
-        --path, -p              Destination path of the output  (default: cropped.png)
-        --outputFormat, -f      Result image format             (default: png)
+        --path, -p              Destination path of the output  (default: ./)
+        --format, -f            Result image format             (default: png)
         --silent, -s            Don't log success               (default: false)
 
     Example
-        $ crop-node image.png --path image-cropped.png
+        $ crop-node src/*.png --path dist/
 `, {
+    importMeta: import.meta,
     flags: {
         path: {
-            alias: "p",
+            shortFlag: "p",
             type: "string",
-            default: "cropped.png",
+            default: "./",
         },
-        outputFormat: {
-            alias: "f",
+        format: {
+            shortFlag: "f",
             type: "string",
             default: "png",
         },
         silent: {
-            alias: "s",
+            shortFlag: "s",
             type: "boolean",
             default: false,
         },
     },
 });
 
-run(index);
+await run(cli);
